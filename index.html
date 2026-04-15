@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MobilizaRJ - Sistema de Gestão Eleitoral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 25%, #312e81 50%, #1e1b4b 75%, #0f172a 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            color: #e2e8f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
+            background-size: 300% 100%;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .glass-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 25px 50px -12px rgba(139, 92, 246, 0.25);
+        }
+
+        .nav-tab {
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 0 4px;
+        }
+
+        .nav-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #ec4899);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+
+        .nav-tab.active::after, .nav-tab:hover::after { width: 80%; }
+        .nav-tab.active { 
+            color: white;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+        }
+
+        .metric-value {
+            background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .upload-zone {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(236, 72, 153, 0.1) 100%);
+            border: 2px dashed rgba(139, 92, 246, 0.4);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-radius: 20px;
+            padding: 40px 20px;
+        }
+
+        .upload-zone:hover {
+            border-color: #ec4899;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 50%, rgba(236, 72, 153, 0.15) 100%);
+            transform: scale(1.02);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 200%;
+            animation: gradientButton 3s ease infinite;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s ease;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        @keyframes gradientButton {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+
+        .input-field {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+
+        .input-field:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+            outline: none;
+        }
+
+        .chart-container { 
+            position: relative; 
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.5s ease-out forwards; }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .pulse-ring { animation: pulseRing 2s ease-out infinite; }
+
+        @keyframes pulseRing { 
+            0% { transform: scale(1); opacity: 1; } 
+            100% { transform: scale(1.5); opacity: 0; } 
+        }
+
+        ::-webkit-scrollbar { width: 12px; height: 12px; }
+        ::-webkit-scrollbar-track { 
+            background: rgba(15, 23, 42, 0.8); 
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, #3b82f6, #8b5cf6, #ec4899); 
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background: linear-gradient(180deg, #60a5fa, #a78bfa, #f472b6); 
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+        }
+
+        .status-badge { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+        }
+
+        .status-success { 
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1)); 
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .status-warning { 
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1)); 
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .status-info { 
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1)); 
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .kpi-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -15px rgba(139, 92, 246, 0.3);
+        }
+
+        .kpi-card.orange::after {
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+        }
+
+        .kpi-card.purple::after {
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+        }
+
+        .kpi-card.green::after {
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+        }
+
+        .kpi-card.pink::after {
+            background: linear-gradient(90deg, #ec4899, #f59e0b);
+        }
+
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 800;
+            margin: 12px 0;
+            background: linear-gradient(135deg, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        table thead tr {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+        }
+
+        table th {
+            padding: 14px;
+            text-align: left;
+            color: #a78bfa;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        table td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        table tbody tr:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.99));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            padding-bottom: 15px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #e2e8f0;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .pdf-frame {
+            width: 100%;
+            height: 68vh;
+            border: none;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                max-width: 100% !important;
+                max-height: 100vh !important;
+                height: 100vh;
+                border-radius: 0 !important;
+                padding: 16px !important;
+                overflow-y: auto;
+            }
+            .pdf-frame {
+                height: 55vh;
+            }
+            .modal.show {
+                align-items: flex-start;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .glass-panel {
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .chart-container {
+                height: 250px !important;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            table th, table td {
+                padding: 10px;
+            }
+
+            .modal-content {
+                max-width: 95%;
+                padding: 20px;
+            }
+
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-value {
+                font-size: 28px;
+            }
+
+            .nav-tab {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 14px;
+            }
+
+            .glass-card {
+                padding: 18px;
+            }
+
+            .kpi-value {
+                font-size: 24px;
+            }
+
+            .chart-container {
+                height: 200px !important;
+            }
+
+            table {
+                font-size: 11px;
+            }
+
+            table th, table td {
+                padding: 8px;
+            }
+
+            .empty-state {
+                padding: 40px 15px;
+            }
+
+            .empty-state-icon {
+                width: 80px;
+                height: 80px;
+                font-size: 40px;
+            }
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 200%;
+            animation: gradientButton 3s ease infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 24px 0;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            padding-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .tabs-container {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                gap: 6px;
+                padding-bottom: 10px;
+                margin: 16px 0;
+            }
+            .tabs-container::-webkit-scrollbar { display: none; }
+            .nav-tab {
+                white-space: nowrap;
+                flex-shrink: 0;
+                font-size: 12px !important;
+                padding: 10px 12px !important;
+            }
+            .nav-tab i { display: none; }
+        }
+
+        .file-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .file-indicator.show {
+            display: flex;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 100%;
+            animation: gradientMove 2s linear infinite;
+            transition: width 1s ease;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .region-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .region-card:hover {
+            border-color: rgba(139, 92, 246, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.2);
+        }
+
+        .top-region-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+            margin-bottom: 12px;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .top-region-item:hover {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
+            transform: translateX(4px);
+        }
+
+        .rank-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="glass-panel sticky top-0 z-50 border-b border-white/5">
+        <div style="max-width: 1400px; margin: 0 auto; padding: 16px 20px;">
+            <div class="header-container">
+                <div class="header-title">
+                    <div class="header-logo">🇧🇷</div>
+                    <div>
+                        <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: white; background: linear-gradient(135deg, #fff, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">MobilizaRJ</h1>
+                        <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8; font-weight: 500;">Gestão Eleitoral Inteligente • Deputado Estadual RJ</p>
+                    </div>
+                </div>
+                <div id="file-indicator" class="file-indicator" style="display: flex; align-items: center; gap: 8px;">
+                    <div class="pulse-dot"></div>
+                    <span id="file-name-display" style="font-size: 14px; color: #34d399; font-weight: 600;"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <input type="file" id="file-upload" accept=".xlsx,.xls" style="display: none;" onchange="handleFileUpload(event)">
+
+    <!-- Main Content -->
+    <main style="max-width: 1400px; margin: 0 auto; padding: 24px;">
+
+        <!-- Empty State -->
+        <div id="empty-state" class="animate-fade-in">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h2 style="font-size: 36px; font-weight: 800; color: white; margin: 0 0 20px 0; background: linear-gradient(135deg, #fff, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sua campanha começa aqui</h2>
+                <p style="color: #94a3b8; font-size: 16px; max-width: 600px; margin: 0 auto 30px;">Importe a planilha Excel para ativar o sistema completo de análise e projeção de mobilização eleitoral.</p>
+                <div class="upload-zone" onclick="document.getElementById('file-upload').click()">
+                    <div style="width: 70px; height: 70px; margin: 0 auto 20px; border-radius: 50%; background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3)); display: flex; align-items: center; justify-content: center; border: 2px solid rgba(139, 92, 246, 0.4);">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 32px; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    </div>
+                    <p style="color: white; font-weight: 700; font-size: 18px; margin: 0 0 8px 0;">Clique para importar</p>
+                    <p style="color: #94a3b8; font-size: 14px; margin: 0;">Suporta arquivos .xlsx e .xls</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content (Hidden Initially) -->
+        <div id="dashboard-content" style="display: none;">
+
+            <!-- KPI Cards -->
+            <div class="grid-4" style="margin-bottom: 30px;">
+                <div class="kpi-card">
+                    <div class="kpi-label"><i class="fas fa-chart-line" style="margin-right: 8px; color: #60a5fa;"></i>Votos Projetados</div>
+                    <div class="kpi-value" id="kpi-votos" style="background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    <div style="font-size: 12px; color: #64748b; font-weight: 500;">Total estimado</div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-label"><i class="fas fa-users" style="margin-right: 8px; color: #a78bfa;"></i>Público-Alvo</div>
+                    <div class="kpi-value" id="kpi-eleitores" style="background: linear-gradient(135deg, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    <div style="font-size: 12px; color: #64748b; font-weight: 500;">Eleitorado 20-45 anos</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-label"><i class="fas fa-calendar-check" style="margin-right: 8px; color: #34d399;"></i>Reuniões Realizadas</div>
+                    <div class="kpi-value" id="kpi-reunioes" style="background: linear-gradient(135deg, #34d399, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    <div style="font-size: 12px; color: #64748b; font-weight: 500;">Acumuladas</div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-label"><i class="fas fa-bullseye" style="margin-right: 8px; color: #fbbf24;"></i>Reuniões Projetadas</div>
+                    <div class="kpi-value" id="kpi-reunioes-proj" style="background: linear-gradient(135deg, #fbbf24, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    <div style="font-size: 12px; color: #64748b; font-weight: 500;">Meta estimada</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="nav-tab active" onclick="switchTab(1)"><i class="fas fa-th-large" style="margin-right: 8px;"></i>Dashboard</button>
+                <button class="nav-tab" onclick="switchTab(2)"><i class="fas fa-chart-bar" style="margin-right: 8px;"></i>Perspectiva de Votos</button>
+                <button class="nav-tab" onclick="switchTab(3)"><i class="fas fa-sliders-h" style="margin-right: 8px;"></i>Simulador</button>
+                <button class="nav-tab" onclick="switchTab(4)"><i class="fas fa-chart-pie" style="margin-right: 8px;"></i>Realidade</button>
+            </div>
+
+            <!-- Tab 1: Dashboard Principal -->
+            <div id="tab-1" class="tab-content active">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-map-marked-alt" style="color: #a78bfa;"></i>
+                            Distribuição por Região
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="chart-distribuicao"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: white; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="display: flex; align-items: center; gap: 10px;"><i class="fas fa-trophy" style="color: #fbbf24;"></i>Top Regiões</span>
+                            <button class="btn-secondary" onclick="generateAndPreviewPDF(1)" style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                                <i class="fas fa-file-pdf"></i>PDF
+                            </button>
+                        </h3>
+                        <div id="top-regioes"></div>
+                    </div>
+                </div>
+                <div class="glass-card" style="margin-top: 24px;">
+                    <h3 style="margin: 0 0 24px 0; font-size: 20px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-fire" style="color: #f472b6;"></i>
+                        Potencial de Conversão por Região
+                    </h3>
+                    <div id="conversao-regioes" class="grid-3"></div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Perspectiva de Votos -->
+            <div id="tab-2" class="tab-content">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: white; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="display: flex; align-items: center; gap: 10px;"><i class="fas fa-chart-line" style="color: #34d399;"></i>Projeção de Votos</span>
+                            <button class="btn-secondary" onclick="generateAndPreviewPDF(2)" style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                                <i class="fas fa-file-pdf"></i>PDF
+                            </button>
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="chart-votos"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-table" style="color: #60a5fa;"></i>Tabela de Votos
+                        </h3>
+                        <div style="overflow-x: auto;">
+                            <table id="table-votos"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Simulador de Planejamento -->
+            <div id="tab-3" class="tab-content">
+                <div class="grid-2">
+                    <div class="glass-card">
+                        <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: white; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-sliders-h" style="color: #f472b6;"></i>Parâmetros da Simulação
+                        </h3>
+                        <div style="space-y: 20px;">
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; font-size: 12px; color: #a78bfa; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; letter-spacing: 0.5px;">Participantes por Reunião</label>
+                                <input type="number" id="input-media" value="15" onchange="updateSimParams()" class="input-field" style="width: 100%; font-size: 24px; font-weight: 700; text-align: center; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border-color: rgba(139, 92, 246, 0.3);">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; font-size: 12px; color: #a78bfa; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; letter-spacing: 0.5px;">Semanas de Campanha</label>
+                                <input type="number" id="input-semanas" value="22" onchange="updateSimParams()" class="input-field" style="width: 100%; font-size: 24px; font-weight: 700; text-align: center; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border-color: rgba(139, 92, 246, 0.3);">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; font-size: 12px; color: #a78bfa; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; letter-spacing: 0.5px;">Reuniões por Semana</label>
+                                <input type="number" id="input-reunioes" value="2" onchange="updateSimParams()" class="input-field" style="width: 100%; font-size: 24px; font-weight: 700; text-align: center; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border-color: rgba(139, 92, 246, 0.3);">
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05)); border: 1px solid rgba(139, 92, 246, 0.2); font-size: 12px; color: #94a3b8;">
+                            <i class="fas fa-info-circle" style="color: #a78bfa; margin-right: 8px;"></i>Fórmula: Part. x Semanas x Reun./Sem. x 3
+                        </div>
+                        <div style="margin-top: 20px; padding: 24px; border-radius: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.1)); border: 1px solid rgba(16, 185, 129, 0.3); text-align: center;">
+                            <div style="font-size: 12px; color: #34d399; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 1px;">Total de Votos Estimados</div>
+                            <div id="total-votos-sim" style="font-size: 40px; font-weight: 800; background: linear-gradient(135deg, #34d399, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                        </div>
+                        <button class="btn-secondary" onclick="generateAndPreviewPDF(3)" style="width: 100%; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px;">
+                            <i class="fas fa-file-pdf"></i>Visualizar Relatório PDF
+                        </button>
+                    </div>
+                    <div class="glass-card">
+                        <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: white; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="display: flex; align-items: center; gap: 10px;"><i class="fas fa-crosshairs" style="color: #fbbf24;"></i>Cobertura por Região</span>
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="chart-cobertura"></canvas>
+                        </div>
+                        <div style="overflow-x: auto; margin-top: 20px;">
+                            <table id="table-simulacao"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Análise de Realidade -->
+            <div id="tab-4" class="tab-content">
+                <div class="glass-card" style="margin-bottom: 24px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: white; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="display: flex; align-items: center; gap: 10px;"><i class="fas fa-clipboard-list" style="color: #f472b6;"></i>Reuniões Realizadas</span>
+                        <button class="btn-secondary" onclick="generateAndPreviewPDF(4)" style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                            <i class="fas fa-file-pdf"></i>PDF
+                        </button>
+                    </h3>
+                    <div style="overflow-x: auto;">
+                        <table id="table-reunioes"></table>
+                    </div>
+                </div>
+                <div class="grid-4">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Regiões Alcançadas</div>
+                        <div class="kpi-value" id="kpi-regioes" style="background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    </div>
+                    <div class="kpi-card purple">
+                        <div class="kpi-label">Total Reuniões</div>
+                        <div class="kpi-value" id="kpi-total-reunioes" style="background: linear-gradient(135deg, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    </div>
+                    <div class="kpi-card green">
+                        <div class="kpi-label">Participantes</div>
+                        <div class="kpi-value" id="kpi-participantes" style="background: linear-gradient(135deg, #34d399, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    </div>
+                    <div class="kpi-card pink">
+                        <div class="kpi-label">Coordenadores</div>
+                        <div class="kpi-value" id="kpi-coordenadores" style="background: linear-gradient(135deg, #f472b6, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- PDF Preview Modal -->
+    <div id="pdf-modal" class="modal">
+        <div class="modal-content" style="max-width: 1100px;">
+            <div class="modal-header">
+                <div>
+                    <h2 id="pdf-preview-title" style="margin: 0; font-size: 22px; font-weight: 700; color: white; background: linear-gradient(135deg, #fff, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Visualização do Relatório</h2>
+                    <p id="pdf-preview-caption" style="margin: 8px 0 0 0; font-size: 13px; color: #94a3b8;">Revise o documento antes de decidir pelo download.</p>
+                </div>
+                <button class="modal-close" onclick="closePDFModal()">×</button>
+            </div>
+            <iframe id="pdf-frame" class="pdf-frame" title="Pré-visualização do PDF"></iframe>
+            <!-- Mobile fallback: shown instead of iframe on devices that block blob PDF rendering -->
+            <div id="pdf-mobile-fallback" style="display:none; text-align:center; padding: 48px 20px; border-radius: 12px; background: rgba(15,23,42,0.4); border: 1px dashed rgba(139,92,246,0.3);">
+                <i class="fas fa-file-pdf" style="font-size: 56px; background: linear-gradient(135deg, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: block; margin-bottom: 16px;"></i>
+                <p style="color: white; font-size: 17px; font-weight: 700; margin: 0 0 8px 0;">Relatório gerado com sucesso!</p>
+                <p style="color: #94a3b8; font-size: 14px; margin: 0 0 6px 0;">Em dispositivos móveis, a pré-visualização inline não é suportada.</p>
+                <p style="color: #64748b; font-size: 13px; margin: 0;">Use os botões abaixo para abrir ou baixar o documento.</p>
+            </div>
+            <div class="modal-footer">
+                <span style="font-size: 12px; color: #94a3b8;">Todos os relatórios ficam disponíveis para visualização antes do download.</span>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-secondary" onclick="openPDFInNewTab()" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-up-right-from-square"></i>Abrir em nova aba
+                    </button>
+                    <button class="btn-primary" onclick="downloadCurrentPDF()" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-download"></i>Baixar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        // Global Variables
+        let demographicData = [];
+        let simulationData = [];
+        let reunioesData = [];
+        let simParams = { mediaParticipantes: 15, nSemanas: 22, reunioesPorSemana: 2 };
+        let currentTab = 1;
+        let barChartInstance, lineChartInstance, coverageChartInstance;
+        let currentPdfBlobUrl = '';
+        let currentPdfFileName = '';
+
+        // Utility Functions
+        function formatNumber(num) {
+            return new Intl.NumberFormat('pt-BR').format(Math.round(num));
+        }
+
+        function formatPercent(num) {
+            return (num * 100).toFixed(2) + '%';
+        }
+
+        function getTotalEleitores2045() {
+            return demographicData.reduce((sum, d) => sum + (d.eleitores_2045 || 0), 0);
+        }
+
+        function calculateVotosPlanejamento() {
+            const { mediaParticipantes, nSemanas, reunioesPorSemana } = simParams;
+            return mediaParticipantes * nSemanas * reunioesPorSemana * 3;
+        }
+
+        function getTotalReunioesProjetadas() {
+            // Soma do Total Reunioes da aba Simulacao Mobilizacao
+            return simulationData.reduce((sum, d) => sum + (d.total_reunioes || 0), 0);
+        }
+
+        function parseExcelDate(value, cell = null) {
+            if (value instanceof Date && !isNaN(value)) return value;
+
+            if (cell?.w && typeof cell.w === 'string') {
+                const formattedMatch = cell.w.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+                if (formattedMatch) {
+                    const [, day, month, year] = formattedMatch;
+                    return new Date(Number(year), Number(month) - 1, Number(day));
+                }
+            }
+
+            if (typeof value === 'number') {
+                const parsed = XLSX.SSF.parse_date_code(value);
+                if (parsed) {
+                    return new Date(parsed.y, parsed.m - 1, parsed.d, parsed.H || 0, parsed.M || 0, Math.floor(parsed.S || 0));
+                }
+            }
+
+            if (typeof value === 'string') {
+                const brMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+                if (brMatch) {
+                    const [, day, month, year] = brMatch;
+                    return new Date(Number(year), Number(month) - 1, Number(day));
+                }
+                const parsed = new Date(value);
+                if (!isNaN(parsed)) return parsed;
+            }
+
+            return null;
+        }
+
+        function formatExcelDate(value, cell = null) {
+            const parsedDate = parseExcelDate(value, cell);
+            if (parsedDate) return parsedDate.toLocaleDateString('pt-BR');
+            if (cell?.w) return cell.w;
+            if (typeof value === 'string' && value.trim()) return value;
+            return '-';
+        }
+
+        function getTopRegions(limit = 5) {
+            return [...demographicData].sort((a, b) => (b.eleitores_2045 || 0) - (a.eleitores_2045 || 0)).slice(0, limit);
+        }
+
+        function getAverageCoverage() {
+            if (!simulationData.length) return 0;
+            return simulationData.reduce((sum, item) => sum + (item.pct_cobertura || 0), 0) / simulationData.length;
+        }
+
+        function getTotalProjectedVotes() {
+            return simulationData.reduce((sum, item) => sum + (item.votos_estimados_i || 0), 0);
+        }
+
+        function getDateRangeLabel() {
+            const dates = reunioesData.map(r => r.data_obj).filter(Boolean).sort((a, b) => a - b);
+            if (!dates.length) return 'Período não informado';
+            const first = formatExcelDate(dates[0]);
+            const last = formatExcelDate(dates[dates.length - 1]);
+            return first === last ? first : `${first} a ${last}`;
+        }
+
+        function getRealityMetrics() {
+            const totalReunioes = reunioesData.reduce((sum, item) => sum + (item.reunioes || 0), 0);
+            const totalParticipantes = reunioesData.reduce((sum, item) => sum + (item.participantes || 0), 0);
+            const avgParticipantes = totalReunioes > 0 ? totalParticipantes / totalReunioes : 0;
+            const topParticipacao = [...reunioesData].sort((a, b) => (b.participantes || 0) - (a.participantes || 0))[0] || null;
+            const topReunioes = [...reunioesData].sort((a, b) => (b.reunioes || 0) - (a.reunioes || 0))[0] || null;
+            return { totalReunioes, totalParticipantes, avgParticipantes, topParticipacao, topReunioes };
+        }
+
+        function drawSummaryCards(doc, cards, startY, accentColor, pageWidth, margin) {
+            const totalCards = Math.min(cards.length, 4);
+            const gap = 4;
+            const cardHeight = 21;
+            const usableWidth = pageWidth - (margin * 2);
+            const cardWidth = (usableWidth - (gap * (totalCards - 1))) / totalCards;
+
+            cards.slice(0, totalCards).forEach((card, index) => {
+                const x = margin + (index * (cardWidth + gap));
+                doc.setFillColor(248, 250, 252);
+                doc.setDrawColor(226, 232, 240);
+                doc.roundedRect(x, startY, cardWidth, cardHeight, 2, 2, 'FD');
+                doc.setFillColor(...accentColor);
+                doc.roundedRect(x, startY, cardWidth, 3, 2, 2, 'F');
+
+                doc.setFontSize(7.5);
+                doc.setTextColor(100, 116, 139);
+                doc.setFont(undefined, 'bold');
+                doc.text(String(card.label || '').toUpperCase(), x + 3, startY + 8);
+
+                doc.setFontSize(13);
+                doc.setTextColor(15, 23, 42);
+                doc.text(String(card.value || '-'), x + 3, startY + 15);
+
+                if (card.caption) {
+                    doc.setFont(undefined, 'normal');
+                    doc.setFontSize(6.8);
+                    doc.setTextColor(100, 116, 139);
+                    const caption = doc.splitTextToSize(String(card.caption), cardWidth - 6).slice(0, 2);
+                    doc.text(caption, x + 3, startY + 19);
+                }
+            });
+
+            return startY + cardHeight + 8;
+        }
+
+        function addInsightPanel(doc, title, lines, startY, accentColor, pageWidth, margin) {
+            const boxWidth = pageWidth - (margin * 2);
+            const lineHeight = 5;
+            const bulletLines = lines.flatMap(line => doc.splitTextToSize(`• ${line}`, boxWidth - 12));
+            const boxHeight = Math.max(24, 12 + (bulletLines.length * lineHeight));
+
+            doc.setFillColor(248, 250, 252);
+            doc.setDrawColor(226, 232, 240);
+            doc.roundedRect(margin, startY, boxWidth, boxHeight, 2, 2, 'FD');
+            doc.setFillColor(...accentColor);
+            doc.roundedRect(margin, startY, 3, boxHeight, 2, 2, 'F');
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(15, 23, 42);
+            doc.text(title, margin + 7, startY + 7);
+
+            doc.setFontSize(8.7);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(71, 85, 105);
+            doc.text(bulletLines, margin + 7, startY + 13);
+
+            return startY + boxHeight + 8;
+        }
+
+        function addChartSnapshot(doc, canvasId, title, startY, accentColor, pageWidth, margin) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return startY;
+
+            const chartHeight = 70;
+            doc.setFontSize(10.5);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...accentColor);
+            doc.text(title, margin, startY);
+            doc.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', margin, startY + 4, pageWidth - (margin * 2), chartHeight);
+            return startY + chartHeight + 12;
+        }
+
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+        }
+
+        function previewPDFDocument(doc, fileName, title) {
+            const blob = doc.output('blob');
+            if (currentPdfBlobUrl) URL.revokeObjectURL(currentPdfBlobUrl);
+            currentPdfBlobUrl = URL.createObjectURL(blob);
+            currentPdfFileName = fileName;
+            document.getElementById('pdf-preview-title').textContent = `Visualização do Relatório • ${title}`;
+
+            const frame = document.getElementById('pdf-frame');
+            const fallback = document.getElementById('pdf-mobile-fallback');
+
+            if (isMobile()) {
+                // Mobile browsers (iOS Safari, Android Chrome) block blob: PDF in iframes.
+                // Show the fallback panel and keep the iframe blank.
+                frame.style.display = 'none';
+                frame.src = 'about:blank';
+                fallback.style.display = 'block';
+                document.getElementById('pdf-preview-caption').textContent = 'Use os botões abaixo para visualizar ou baixar o relatório.';
+            } else {
+                frame.style.display = 'block';
+                fallback.style.display = 'none';
+                frame.src = currentPdfBlobUrl;
+                document.getElementById('pdf-preview-caption').textContent = 'Revise o documento e, se estiver de acordo, faça o download.';
+            }
+
+            document.getElementById('pdf-modal').classList.add('show');
+        }
+
+        function downloadCurrentPDF() {
+            if (!currentPdfBlobUrl) return;
+            const link = document.createElement('a');
+            link.href = currentPdfBlobUrl;
+            link.download = currentPdfFileName || 'relatorio.pdf';
+            link.click();
+        }
+
+        function openPDFInNewTab() {
+            if (!currentPdfBlobUrl) return;
+            window.open(currentPdfBlobUrl, '_blank');
+        }
+
+        // File Upload Handler
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+
+                    // Extract Dados Demograficos
+                    const demoSheet = workbook.Sheets['Dados Demograficos'];
+                    demographicData = [];
+                    for (let row = 5; row <= 14; row++) {
+                        const regiao = demoSheet[`B${row}`]?.v;
+                        if (!regiao) break;
+                        demographicData.push({
+                            regiao,
+                            eleitores_totais: demoSheet[`C${row}`]?.v || 0,
+                            pct_faixa_20_45: demoSheet[`D${row}`]?.v || 0,
+                            eleitores_2045: demoSheet[`E${row}`]?.v || 0,
+                            observacoes: demoSheet[`F${row}`]?.v || '',
+                            pct_participacao: demoSheet[`G${row}`]?.v || 0
+                        });
+                    }
+
+                    // Extract Simulacao Mobilizacao
+                    const simSheet = workbook.Sheets['Simulacao Mobilizacao'];
+                    simulationData = [];
+                    for (let row = 9; row <= 18; row++) {
+                        const regiao = simSheet[`B${row}`]?.v;
+                        if (!regiao) break;
+                        simulationData.push({
+                            regiao,
+                            participantes_reuniao: simSheet[`C${row}`]?.v || 0,
+                            n_semanas: simSheet[`D${row}`]?.v || 0,
+                            total_reunioes: simSheet[`E${row}`]?.v || 0,
+                            total_participantes: simSheet[`F${row}`]?.v || 0,
+                            votos_estimados_i: simSheet[`G${row}`]?.v || 0,
+                            pct_cobertura: simSheet[`H${row}`]?.v || 0,
+                            reunioes_realizadas: simSheet[`I${row}`]?.v || null,
+                            media_participantes: simSheet[`J${row}`]?.v || null,
+                            votos_estimados_ii: simSheet[`K${row}`]?.v || null
+                        });
+                    }
+
+                    // Extract REUNIÕES
+                    const reunioesSheet = workbook.Sheets['REUNIÕES'];
+                    reunioesData = [];
+                    for (let row = 4; row <= 10; row++) {
+                        const regiao = reunioesSheet[`B${row}`]?.v;
+                        if (!regiao) break;
+                        const dataCell = reunioesSheet[`A${row}`];
+                        reunioesData.push({
+                            data: dataCell?.v || '',
+                            data_obj: parseExcelDate(dataCell?.v, dataCell),
+                            data_formatada: formatExcelDate(dataCell?.v, dataCell),
+                            regiao,
+                            municipio: reunioesSheet[`C${row}`]?.v || '',
+                            bairro: reunioesSheet[`D${row}`]?.v || '',
+                            reunioes: reunioesSheet[`E${row}`]?.v || 0,
+                            participantes: reunioesSheet[`F${row}`]?.v || 0,
+                            coordenador: reunioesSheet[`G${row}`]?.v || ''
+                        });
+                    }
+
+                    // Show dashboard and hide empty state
+                    document.getElementById('empty-state').style.display = 'none';
+                    document.getElementById('dashboard-content').style.display = 'block';
+                    document.getElementById('file-indicator').classList.add('show');
+                    document.getElementById('file-name-display').textContent = file.name;
+
+                    // Render all tabs
+                    renderGlobalKPIs();
+                    renderTab1();
+                    renderTab2();
+                    renderTab3();
+                    renderTab4();
+
+                } catch (error) {
+                    console.error('Erro ao carregar arquivo:', error);
+                    alert('Erro ao carregar arquivo. Verifique se é um arquivo Excel válido.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Render KPIs
+        function renderGlobalKPIs() {
+            const totalVotos = simulationData.reduce((sum, d) => sum + (d.votos_estimados_i || 0), 0);
+            const totalEleitores = getTotalEleitores2045();
+            const totalReunioes = reunioesData.reduce((sum, d) => sum + (d.reunioes || 0), 0);
+            const totalReunioesProjetadas = getTotalReunioesProjetadas();
+
+            document.getElementById('kpi-votos').textContent = formatNumber(totalVotos);
+            document.getElementById('kpi-eleitores').textContent = formatNumber(totalEleitores);
+            document.getElementById('kpi-reunioes').textContent = formatNumber(totalReunioes);
+            document.getElementById('kpi-reunioes-proj').textContent = formatNumber(totalReunioesProjetadas);
+        }
+
+        // Tab 1: Dashboard Principal
+        function renderTab1() {
+            const total2045 = getTotalEleitores2045();
+            const sortedDemo = [...demographicData].sort((a, b) => b.eleitores_2045 - a.eleitores_2045);
+
+            // Top Regiões
+            let topHtml = '';
+            sortedDemo.slice(0, 5).forEach((r, i) => {
+                const colors = ['#fbbf24', '#a78bfa', '#60a5fa', '#34d399', '#f472b6'];
+                const color = colors[i] || '#60a5fa';
+                topHtml += `
+                    <div class="top-region-item" style="border-left: 4px solid ${color};">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="rank-badge" style="background: ${color};">${i + 1}</div>
+                            <span style="color: white; font-weight: 600; font-size: 15px;">${r.regiao}</span>
+                        </div>
+                        <span style="background: linear-gradient(135deg, ${color}, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 18px;">${formatNumber(r.eleitores_2045)}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('top-regioes').innerHTML = topHtml;
+
+            // Conversão por Região
+            const colors = [
+                { from: '#3b82f6', to: '#06b6d4' },
+                { from: '#8b5cf6', to: '#ec4899' },
+                { from: '#10b981', to: '#3b82f6' },
+                { from: '#f59e0b', to: '#ef4444' },
+                { from: '#ec4899', to: '#f59e0b' },
+                { from: '#06b6d4', to: '#8b5cf6' },
+                { from: '#84cc16', to: '#10b981' },
+                { from: '#f97316', to: '#f59e0b' },
+                { from: '#6366f1', to: '#8b5cf6' },
+                { from: '#14b8a6', to: '#06b6d4' }
+            ];
+
+            let convHtml = '';
+            demographicData.forEach((r, index) => {
+                const pct = total2045 > 0 ? r.eleitores_2045 / total2045 : 0;
+                const color = colors[index % colors.length];
+                convHtml += `
+                    <div class="region-card" style="animation-delay: ${index * 0.05}s;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin: 0 0 8px 0; font-weight: 700; color: white; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.regiao}</h4>
+                                <p style="margin: 0; font-size: 12px; color: #94a3b8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">${r.observacoes}</p>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <p style="margin: 0 0 8px 0; font-size: 28px; font-weight: 800; background: linear-gradient(135deg, ${color.from}, ${color.to}); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${formatNumber(r.eleitores_2045)}</p>
+                            <p style="margin: 0; font-size: 12px; color: #94a3b8;">eleitores 20-45 anos</p>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 13px; font-weight: 700; color: ${color.to};">${formatPercent(pct)}</span>
+                            <span style="font-size: 11px; color: #64748b;">do público-alvo</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" style="width: ${pct * 100}%; background: linear-gradient(90deg, ${color.from}, ${color.to});"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('conversao-regioes').innerHTML = convHtml;
+
+            // Chart
+            setTimeout(() => {
+                const ctx = document.getElementById('chart-distribuicao');
+                if (barChartInstance) barChartInstance.destroy();
+
+                const gradientColors = demographicData.map((_, i) => {
+                    const ctx = document.getElementById('chart-distribuicao').getContext('2d');
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                    gradient.addColorStop(0, ['#60a5fa', '#a78bfa', '#f472b6', '#fbbf24', '#34d399'][i % 5]);
+                    gradient.addColorStop(1, ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'][i % 5]);
+                    return gradient;
+                });
+
+                barChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: demographicData.map(r => r.regiao.length > 20 ? r.regiao.substring(0, 18) + '...' : r.regiao),
+                        datasets: [{
+                            label: 'Eleitores 20-45',
+                            data: demographicData.map(r => r.eleitores_2045),
+                            backgroundColor: [
+                                'rgba(96, 165, 250, 0.8)',
+                                'rgba(167, 139, 250, 0.8)',
+                                'rgba(244, 114, 182, 0.8)',
+                                'rgba(251, 191, 36, 0.8)',
+                                'rgba(52, 211, 153, 0.8)',
+                                'rgba(139, 92, 246, 0.8)',
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(236, 72, 153, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(16, 185, 129, 0.8)'
+                            ],
+                            borderRadius: 12,
+                            borderSkipped: false,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(15,23,42,0.95)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgba(139,92,246,0.4)',
+                                borderWidth: 1,
+                                padding: 14,
+                                cornerRadius: 10,
+                                callbacks: { label: c => formatNumber(c.raw) + ' eleitores' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { 
+                                    color: '#94a3b8', 
+                                    callback: v => formatNumber(v),
+                                    font: { weight: '600' }
+                                },
+                                grid: { color: 'rgba(255,255,255,0.05)' }
+                            },
+                            x: {
+                                ticks: { 
+                                    color: '#94a3b8', 
+                                    maxRotation: 30, 
+                                    font: { size: 11, weight: '600' } 
+                                },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }, 100);
+        }
+
+        // Tab 2: Perspectiva de Votos
+        function renderTab2() {
+            // Table
+            let tableHtml = '<thead><tr><th>Região</th><th style="text-align: right;">Votos Proj.</th><th style="text-align: right;">Cobertura %</th></tr></thead><tbody>';
+            simulationData.forEach((s, i) => {
+                const colors = ['#60a5fa', '#a78bfa', '#f472b6', '#fbbf24', '#34d399'];
+                const color = colors[i % colors.length];
+                tableHtml += `
+                    <tr>
+                        <td style="font-weight: 600; color: white;">${s.regiao}</td>
+                        <td style="text-align: right; background: linear-gradient(135deg, ${color}, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">${formatNumber(s.votos_estimados_i)}</td>
+                        <td style="text-align: right; color: ${color}; font-weight: 600;">${formatPercent(s.pct_cobertura)}</td>
+                    </tr>
+                `;
+            });
+            tableHtml += '</tbody>';
+            document.getElementById('table-votos').innerHTML = tableHtml;
+
+            // Chart
+            setTimeout(() => {
+                const ctx = document.getElementById('chart-votos');
+                if (lineChartInstance) lineChartInstance.destroy();
+
+                const ctx2d = ctx.getContext('2d');
+                const gradient = ctx2d.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(139, 92, 246, 0.3)');
+                gradient.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+
+                lineChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: simulationData.map(s => s.regiao.substring(0, 15)),
+                        datasets: [{
+                            label: 'Votos Estimados',
+                            data: simulationData.map(s => s.votos_estimados_i),
+                            borderColor: '#a78bfa',
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#a78bfa',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(15,23,42,0.95)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgba(139,92,246,0.4)',
+                                borderWidth: 1,
+                                padding: 14,
+                                cornerRadius: 10
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { 
+                                    color: '#94a3b8', 
+                                    callback: v => formatNumber(v),
+                                    font: { weight: '600' }
+                                },
+                                grid: { color: 'rgba(255,255,255,0.05)' }
+                            },
+                            x: {
+                                ticks: { 
+                                    color: '#94a3b8', 
+                                    maxRotation: 45, 
+                                    font: { size: 10, weight: '600' } 
+                                },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }, 100);
+        }
+
+        // Tab 3: Simulador de Planejamento
+        function renderTab3() {
+            updateSimParams();
+        }
+
+        function updateSimParams() {
+            simParams.mediaParticipantes = parseInt(document.getElementById('input-media').value) || 15;
+            simParams.nSemanas = parseInt(document.getElementById('input-semanas').value) || 22;
+            simParams.reunioesPorSemana = parseInt(document.getElementById('input-reunioes').value) || 2;
+
+            const vpr = calculateVotosPlanejamento();
+            const totalVP = vpr * demographicData.length;
+            document.getElementById('total-votos-sim').textContent = formatNumber(totalVP);
+
+            // Table
+            let tableHtml = '<thead><tr><th>Região</th><th style="text-align: right;">Eleitores</th><th style="text-align: right;">Votos Proj.</th><th style="text-align: right;">% Cobertura</th></tr></thead><tbody>';
+            demographicData.forEach((r, i) => {
+                const v = vpr;
+                const cob = r.eleitores_2045 > 0 ? v / r.eleitores_2045 : 0;
+                const colors = ['status-info', 'status-success', 'status-warning'];
+                let bc = 'status-info';
+                if (cob > 0.03) bc = 'status-success';
+                else if (cob < 0.01) bc = 'status-warning';
+
+                const color = cob > 0.03 ? '#34d399' : (cob < 0.01 ? '#fbbf24' : '#60a5fa');
+
+                tableHtml += `
+                    <tr>
+                        <td style="font-weight: 600; color: white;">${r.regiao}</td>
+                        <td style="text-align: right; color: #94a3b8;">${formatNumber(r.eleitores_2045)}</td>
+                        <td style="text-align: right; background: linear-gradient(135deg, #34d399, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">${formatNumber(v)}</td>
+                        <td style="text-align: right;"><span style="color: ${color}; font-weight: 600; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 12px;">${formatPercent(cob)}</span></td>
+                    </tr>
+                `;
+            });
+            tableHtml += '</tbody>';
+            document.getElementById('table-simulacao').innerHTML = tableHtml;
+
+            // Chart
+            setTimeout(() => {
+                const ctx = document.getElementById('chart-cobertura');
+                if (coverageChartInstance) coverageChartInstance.destroy();
+                const cd = demographicData.map(r => {
+                    const v = vpr;
+                    return r.eleitores_2045 > 0 ? (v / r.eleitores_2045) * 100 : 0;
+                });
+
+                coverageChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: demographicData.map(r => r.regiao.substring(0, 20)),
+                        datasets: [{
+                            label: '% Cobertura',
+                            data: cd,
+                            backgroundColor: [
+                                'rgba(139, 92, 246, 0.8)',
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(236, 72, 153, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(6, 182, 212, 0.8)',
+                                'rgba(251, 191, 36, 0.8)',
+                                'rgba(244, 114, 182, 0.8)',
+                                'rgba(96, 165, 250, 0.8)',
+                                'rgba(52, 211, 153, 0.8)'
+                            ],
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(15,23,42,0.95)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgba(139,92,246,0.4)',
+                                borderWidth: 1,
+                                padding: 14,
+                                cornerRadius: 10,
+                                callbacks: { label: c => c.raw.toFixed(2) + '%' }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { 
+                                    color: '#94a3b8', 
+                                    callback: v => v + '%',
+                                    font: { weight: '600' }
+                                },
+                                grid: { color: 'rgba(255,255,255,0.05)' }
+                            },
+                            y: {
+                                ticks: { 
+                                    color: '#94a3b8', 
+                                    font: { size: 10, weight: '600' } 
+                                },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }, 100);
+        }
+
+        // Tab 4: Análise de Realidade
+        function renderTab4() {
+            // Table
+            let tableHtml = '<thead><tr><th>Data</th><th>Região</th><th style="text-align: right;">Reuniões</th><th style="text-align: right;">Participantes</th><th>Coordenador</th></tr></thead><tbody>';
+            reunioesData.forEach((r, i) => {
+                const dateStr = r.data_formatada || formatExcelDate(r.data);
+                const colors = ['#60a5fa', '#a78bfa', '#f472b6', '#fbbf24', '#34d399', '#ec4899'];
+                const color = colors[i % colors.length];
+                tableHtml += `
+                    <tr>
+                        <td style="color: ${color}; font-weight: 600;">${dateStr}</td>
+                        <td style="color: white; font-weight: 600;">${r.regiao}</td>
+                        <td style="text-align: right; background: linear-gradient(135deg, #34d399, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">${r.reunioes}</td>
+                        <td style="text-align: right; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">${r.participantes}</td>
+                        <td style="color: #94a3b8;">${r.coordenador}</td>
+                    </tr>
+                `;
+            });
+            tableHtml += '</tbody>';
+            document.getElementById('table-reunioes').innerHTML = tableHtml;
+
+            // KPIs
+            const regioesSet = new Set(reunioesData.map(r => r.regiao));
+            const totalReunioes = reunioesData.reduce((sum, r) => sum + r.reunioes, 0);
+            const totalParticipantes = reunioesData.reduce((sum, r) => sum + r.participantes, 0);
+            const coordenadoresSet = new Set(reunioesData.map(r => r.coordenador));
+
+            document.getElementById('kpi-regioes').textContent = regioesSet.size;
+            document.getElementById('kpi-total-reunioes').textContent = formatNumber(totalReunioes);
+            document.getElementById('kpi-participantes').textContent = formatNumber(totalParticipantes);
+            document.getElementById('kpi-coordenadores').textContent = coordenadoresSet.size;
+        }
+
+        // Tab Switching
+        function switchTab(tabNum) {
+            currentTab = tabNum;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Fix: use index instead of event.target (event.target can be the inner <i> icon, not the button)
+            document.querySelectorAll('.nav-tab').forEach((el, i) => el.classList.toggle('active', i === tabNum - 1));
+            document.getElementById(`tab-${tabNum}`).classList.add('active');
+
+            // Fix: re-render charts after tab becomes visible.
+            // Charts created while the tab is hidden (display:none) get zero dimensions
+            // and never auto-resize on mobile. Destroying and re-creating on activation fixes this.
+            if (demographicData.length || simulationData.length || reunioesData.length) {
+                requestAnimationFrame(() => {
+                    if (tabNum === 1) renderTab1();
+                    else if (tabNum === 2) renderTab2();
+                    else if (tabNum === 3) updateSimParams();
+                    else if (tabNum === 4) renderTab4();
+                });
+            }
+        }
+
+        // PDF Generation with Professional Layout
+        function generateAndPreviewPDF(tabNum) {
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            const tabNames = ['Dashboard Principal', 'Perspectiva de Votos', 'Simulador de Planejamento', 'Análise de Realidade'];
+            const tabName = tabNames[tabNum - 1];
+
+            function addHeader() {
+                doc.setFillColor(248, 250, 252);
+                doc.rect(0, 0, pageWidth, 24, 'F');
+                doc.setFontSize(16);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(15, 23, 42);
+                doc.text('MobilizaRJ', margin, 11);
+                doc.setFontSize(9.5);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(100, 116, 139);
+                doc.text('Gestão Eleitoral Inteligente • Deputado Estadual RJ', margin, 17);
+                doc.setDrawColor(226, 232, 240);
+                doc.line(margin, 22, pageWidth - margin, 22);
+
+                doc.setFontSize(13);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(15, 23, 42);
+                doc.text(`Relatório: ${tabName}`, margin, 31);
+
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, margin, 37);
+                return 45;
+            }
+
+            function addFooter(pageNum) {
+                const footerY = pageHeight - 8;
+                doc.setDrawColor(226, 232, 240);
+                doc.line(margin, footerY - 4, pageWidth - margin, footerY - 4);
+                doc.setFontSize(8);
+                doc.setTextColor(100, 116, 139);
+                doc.text(`Página ${pageNum}`, pageWidth - margin - 18, footerY);
+            }
+
+            function applyTable(options) {
+                doc.autoTable({
+                    theme: 'grid',
+                    margin,
+                    styles: {
+                        cellPadding: 3,
+                        fontSize: 8.7,
+                        textColor: [15, 23, 42],
+                        lineColor: [226, 232, 240],
+                        lineWidth: 0.2,
+                        valign: 'middle',
+                        overflow: 'linebreak'
+                    },
+                    headStyles: {
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 9.2,
+                        halign: 'center',
+                        valign: 'middle'
+                    },
+                    bodyStyles: {
+                        textColor: [15, 23, 42],
+                        fontSize: 8.7,
+                        valign: 'middle'
+                    },
+                    alternateRowStyles: {
+                        fillColor: [248, 250, 252]
+                    },
+                    ...options
+                });
+            }
+
+            let yPos = addHeader();
+
+            if (tabNum === 1) {
+                const totalEleitores = getTotalEleitores2045();
+                const totalVotos = getTotalProjectedVotes();
+                const mediaCobertura = getAverageCoverage();
+                const topRegion = getTopRegions(1)[0];
+                const concentrationTop5 = getTopRegions(5).reduce((sum, item) => sum + (item.eleitores_2045 || 0), 0);
+                const concentrationPct = totalEleitores > 0 ? concentrationTop5 / totalEleitores : 0;
+
+                yPos = drawSummaryCards(doc, [
+                    { label: 'Eleitores 20-45', value: formatNumber(totalEleitores), caption: 'Base total monitorada' },
+                    { label: 'Votos projetados', value: formatNumber(totalVotos), caption: 'Soma da aba de mobilização' },
+                    { label: 'Cobertura média', value: formatPercent(mediaCobertura), caption: 'Média entre as regiões' },
+                    { label: 'Região líder', value: topRegion?.regiao || '-', caption: topRegion ? formatNumber(topRegion.eleitores_2045) + ' eleitores 20-45' : 'Sem dados' }
+                ], yPos, [59, 130, 246], pageWidth, margin);
+
+                yPos = addInsightPanel(doc, 'Insights executivos', [
+                    `As 5 regiões mais fortes concentram ${formatPercent(concentrationPct)} do público de 20 a 45 anos.`,
+                    topRegion ? `${topRegion.regiao} lidera a base com ${formatNumber(topRegion.eleitores_2045)} eleitores prioritários.` : 'Ainda não há região líder identificada.',
+                    `A projeção atual soma ${formatNumber(totalVotos)} votos, com cobertura média de ${formatPercent(mediaCobertura)}.`
+                ], yPos, [59, 130, 246], pageWidth, margin);
+
+                applyTable({
+                    head: [['Região', 'Eleitores 20-45', 'Votos Estimados', 'Cobertura %']],
+                    body: demographicData.map((d, i) => [
+                        d.regiao,
+                        formatNumber(d.eleitores_2045),
+                        formatNumber(simulationData[i]?.votos_estimados_i || 0),
+                        formatPercent(simulationData[i]?.pct_cobertura || 0)
+                    ]),
+                    startY: yPos,
+                    headStyles: { fillColor: [59, 130, 246] },
+                    columnStyles: {
+                        0: { cellWidth: 82, halign: 'left' },
+                        1: { cellWidth: 34, halign: 'center' },
+                        2: { cellWidth: 34, halign: 'center' },
+                        3: { cellWidth: 28, halign: 'center' }
+                    }
+                });
+
+                doc.addPage();
+                yPos = addHeader();
+                yPos = addChartSnapshot(doc, 'chart-distribuicao', 'Distribuição visual por região', yPos, [59, 130, 246], pageWidth, margin);
+                addInsightPanel(doc, 'Leitura estratégica', [
+                    'Priorize coordenações locais nas regiões mais densas para acelerar capilaridade.',
+                    'Use a distribuição regional para calibrar agenda presencial, comunicação segmentada e alocação de lideranças.'
+                ], yPos, [59, 130, 246], pageWidth, margin);
+
+            } else if (tabNum === 2) {
+                const topVotes = [...simulationData].sort((a, b) => (b.votos_estimados_i || 0) - (a.votos_estimados_i || 0))[0] || null;
+                const totalVotos = getTotalProjectedVotes();
+                const mediaCobertura = getAverageCoverage();
+                const coveredRegions = simulationData.filter(item => (item.pct_cobertura || 0) > 0).length;
+
+                yPos = drawSummaryCards(doc, [
+                    { label: 'Total projetado', value: formatNumber(totalVotos), caption: 'Soma dos votos por região' },
+                    { label: 'Cobertura média', value: formatPercent(mediaCobertura), caption: 'Desempenho médio estimado' },
+                    { label: 'Regiões cobertas', value: formatNumber(coveredRegions), caption: 'Com projeção registrada' },
+                    { label: 'Maior projeção', value: topVotes ? formatNumber(topVotes.votos_estimados_i) : '-', caption: topVotes?.regiao || 'Sem dados' }
+                ], yPos, [99, 102, 241], pageWidth, margin);
+
+                yPos = addInsightPanel(doc, 'Insights de voto', [
+                    topVotes ? `${topVotes.regiao} lidera a projeção com ${formatNumber(topVotes.votos_estimados_i)} votos estimados.` : 'Ainda não há liderança regional definida.',
+                    `A média de cobertura entre as regiões está em ${formatPercent(mediaCobertura)}.`,
+                    'Concentre reforço de mobilização onde a cobertura estiver abaixo da média para reduzir dispersão territorial.'
+                ], yPos, [99, 102, 241], pageWidth, margin);
+
+                applyTable({
+                    head: [['Região', 'Eleitores 20-45', 'Votos Projetados', 'Cobertura %']],
+                    body: demographicData.map((d, i) => [
+                        d.regiao,
+                        formatNumber(d.eleitores_2045),
+                        formatNumber(simulationData[i]?.votos_estimados_i || 0),
+                        formatPercent(simulationData[i]?.pct_cobertura || 0)
+                    ]),
+                    startY: yPos,
+                    headStyles: { fillColor: [99, 102, 241] },
+                    columnStyles: {
+                        0: { cellWidth: 82, halign: 'left' },
+                        1: { cellWidth: 34, halign: 'center' },
+                        2: { cellWidth: 34, halign: 'center' },
+                        3: { cellWidth: 28, halign: 'center' }
+                    }
+                });
+
+                doc.addPage();
+                yPos = addHeader();
+                yPos = addChartSnapshot(doc, 'chart-votos', 'Curva comparativa das projeções', yPos, [99, 102, 241], pageWidth, margin);
+                addInsightPanel(doc, 'Recomendação de execução', [
+                    'Cruze a curva de votos com a agenda de rua para proteger regiões de maior retorno marginal.',
+                    'Use a tabela como base para metas regionais, responsabilização e acompanhamento semanal.'
+                ], yPos, [99, 102, 241], pageWidth, margin);
+
+            } else if (tabNum === 3) {
+                const vpr = calculateVotosPlanejamento();
+                const potencialTotal = vpr * demographicData.length;
+                const mediaCoberturaPlanejada = demographicData.length ? demographicData.reduce((sum, d) => sum + (d.eleitores_2045 > 0 ? vpr / d.eleitores_2045 : 0), 0) / demographicData.length : 0;
+
+                yPos = drawSummaryCards(doc, [
+                    { label: 'Part./reunião', value: simParams.mediaParticipantes, caption: 'Parâmetro atual' },
+                    { label: 'Semanas', value: simParams.nSemanas, caption: 'Horizonte de campanha' },
+                    { label: 'Reuniões/semana', value: simParams.reunioesPorSemana, caption: 'Cadência operacional' },
+                    { label: 'Votos por região', value: formatNumber(vpr), caption: 'Fórmula do simulador' }
+                ], yPos, [139, 92, 246], pageWidth, margin);
+
+                yPos = addInsightPanel(doc, 'Leitura do simulador', [
+                    `Com os parâmetros atuais, o potencial agregado chega a ${formatNumber(potencialTotal)} votos em ${demographicData.length} regiões.`,
+                    `A cobertura média simulada é de ${formatPercent(mediaCoberturaPlanejada)} por região.`,
+                    'Ajustes em participantes por reunião elevam o potencial de forma mais sensível do que aumentos marginais no número de semanas.'
+                ], yPos, [139, 92, 246], pageWidth, margin);
+
+                applyTable({
+                    head: [['Parâmetro', 'Valor']],
+                    body: [
+                        ['Participantes por Reunião', String(simParams.mediaParticipantes)],
+                        ['Semanas de Campanha', String(simParams.nSemanas)],
+                        ['Reuniões por Semana', String(simParams.reunioesPorSemana)],
+                        ['Votos por Região', formatNumber(vpr)]
+                    ],
+                    startY: yPos,
+                    headStyles: { fillColor: [139, 92, 246] },
+                    columnStyles: {
+                        0: { cellWidth: 80, halign: 'left' },
+                        1: { cellWidth: 35, halign: 'center' }
+                    }
+                });
+
+                yPos = doc.lastAutoTable.finalY + 8;
+                applyTable({
+                    head: [['Região', 'Eleitores 20-45', 'Votos Proj.', '% Cobertura']],
+                    body: demographicData.map(d => [
+                        d.regiao,
+                        formatNumber(d.eleitores_2045),
+                        formatNumber(vpr),
+                        formatPercent(d.eleitores_2045 > 0 ? vpr / d.eleitores_2045 : 0)
+                    ]),
+                    startY: yPos,
+                    headStyles: { fillColor: [139, 92, 246] },
+                    columnStyles: {
+                        0: { cellWidth: 82, halign: 'left' },
+                        1: { cellWidth: 34, halign: 'center' },
+                        2: { cellWidth: 34, halign: 'center' },
+                        3: { cellWidth: 28, halign: 'center' }
+                    }
+                });
+
+                doc.addPage();
+                yPos = addHeader();
+                yPos = addChartSnapshot(doc, 'chart-cobertura', 'Cobertura planejada por região', yPos, [139, 92, 246], pageWidth, margin);
+                addInsightPanel(doc, 'Como usar este relatório', [
+                    'Valide cenários alterando os três parâmetros do simulador para comparar capacidade operacional e retorno político.',
+                    'Use a coluna de cobertura como apoio para definir metas realistas por região e priorizar reforços de campo.'
+                ], yPos, [139, 92, 246], pageWidth, margin);
+
+            } else if (tabNum === 4) {
+                const reality = getRealityMetrics();
+                const bestRegion = reality.topParticipacao;
+                const strongestMeeting = reality.topReunioes;
+                const totalCoordenadores = new Set(reunioesData.map(r => r.coordenador).filter(Boolean)).size;
+                const totalRegioes = new Set(reunioesData.map(r => r.regiao).filter(Boolean)).size;
+
+                yPos = drawSummaryCards(doc, [
+                    { label: 'Período', value: getDateRangeLabel(), caption: 'Datas da aba REUNIÕES' },
+                    { label: 'Total de reuniões', value: formatNumber(reality.totalReunioes), caption: 'Acumulado informado' },
+                    { label: 'Participantes', value: formatNumber(reality.totalParticipantes), caption: 'Presença consolidada' },
+                    { label: 'Coordenações', value: formatNumber(totalCoordenadores), caption: `${formatNumber(totalRegioes)} regiões alcançadas` }
+                ], yPos, [16, 185, 129], pageWidth, margin);
+
+                yPos = addInsightPanel(doc, 'Insights de realidade', [
+                    bestRegion ? `${bestRegion.regiao} registrou o maior volume de participantes (${formatNumber(bestRegion.participantes)}).` : 'Ainda não há destaque de participação registrado.',
+                    strongestMeeting ? `${strongestMeeting.regiao} lidera em reuniões realizadas (${formatNumber(strongestMeeting.reunioes)}).` : 'Ainda não há destaque de reuniões registrado.',
+                    `A média observada foi de ${formatNumber(reality.avgParticipantes)} participantes por reunião.`,
+                    `Período analisado: ${getDateRangeLabel()}.`
+                ], yPos, [16, 185, 129], pageWidth, margin);
+
+                applyTable({
+                    head: [['Data', 'Região', 'Reuniões', 'Participantes', 'Coordenador']],
+                    body: reunioesData.map(r => [
+                        r.data_formatada || formatExcelDate(r.data),
+                        r.regiao,
+                        String(r.reunioes),
+                        String(r.participantes),
+                        r.coordenador
+                    ]),
+                    startY: yPos,
+                    headStyles: { fillColor: [16, 185, 129] },
+                    columnStyles: {
+                        0: { cellWidth: 28, halign: 'center' },
+                        1: { cellWidth: 68, halign: 'left' },
+                        2: { cellWidth: 24, halign: 'center' },
+                        3: { cellWidth: 28, halign: 'center' },
+                        4: { cellWidth: 42, halign: 'left' }
+                    }
+                });
+            }
+
+            for (let i = 1; i <= doc.internal.pages.length - 1; i++) {
+                doc.setPage(i);
+                addFooter(i);
+            }
+
+            previewPDFDocument(doc, `MobilizaRJ_${tabName}.pdf`, tabName);
+        }
+
+        function closePDFModal() {
+            document.getElementById('pdf-modal').classList.remove('show');
+            document.getElementById('pdf-frame').src = 'about:blank';
+            document.getElementById('pdf-frame').style.display = 'block';
+            document.getElementById('pdf-mobile-fallback').style.display = 'none';
+            if (currentPdfBlobUrl) {
+                URL.revokeObjectURL(currentPdfBlobUrl);
+                currentPdfBlobUrl = '';
+            }
+        }
+    </script>
+</body>
+</html>
