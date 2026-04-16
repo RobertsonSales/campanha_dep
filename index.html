@@ -106,10 +106,49 @@
         @media (max-width: 768px) {
             .max-w-screen-2xl { padding-left: 1rem; padding-right: 1rem; }
             .header-font { font-size: 1.5rem; }
-            .nav-link span:last-child { display: none; }
-            .nav-link { padding: 1rem 0.5rem; }
-            .btn-simular span { display: none; }
-            .btn-simular { padding-left: 0.75rem; padding-right: 0.75rem; }
+            .top-nav {
+                width: 100%;
+                justify-content: space-between;
+                gap: 0.25rem !important;
+                overflow-x: visible;
+            }
+            .nav-link {
+                flex: 1 1 0;
+                min-width: 0;
+                padding: 0.75rem 0.35rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 0.25rem !important;
+                text-align: center;
+                line-height: 1.1;
+            }
+            .nav-link span:first-child {
+                font-size: 1.15rem;
+                line-height: 1;
+            }
+            .nav-link span:last-child {
+                display: block;
+                font-size: 0.72rem;
+                white-space: normal;
+            }
+            .btn-simular {
+                padding-left: 0.9rem;
+                padding-right: 0.9rem;
+                gap: 0.35rem !important;
+                font-size: 0.78rem;
+                white-space: nowrap;
+            }
+            .btn-simular span {
+                display: inline;
+                line-height: 1;
+            }
+            .btn-simular svg {
+                width: 1rem;
+                height: 1rem;
+                flex-shrink: 0;
+            }
         }
 
         /* Responsividade do modal de preview PDF em mobile */
@@ -218,14 +257,14 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
-                    <span>Simular Projeções</span>
+                    <span>Simulador de Reuniões</span>
                 </a>
             </div>
         </div>
         
         <!-- NAV -->
         <div class="max-w-screen-2xl mx-auto px-4 sm:px-8 border-t border-slate-100">
-            <nav class="flex justify-center md:justify-start gap-x-4 sm:gap-x-8 overflow-x-auto no-scrollbar">
+            <nav class="top-nav flex justify-center md:justify-start gap-x-4 sm:gap-x-8 overflow-x-auto no-scrollbar">
                 <button onclick="navigateTo(0)" id="nav-0" class="nav-link flex items-center gap-x-2 py-4 border-b-2 border-transparent text-slate-500 font-semibold text-sm hover:text-blue-600 transition-all data-[active=true]:border-blue-600 data-[active=true]:text-blue-600">
                     <span class="text-lg">📊</span><span>Dashboard</span>
                 </button>
